@@ -1,8 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { MapContainer, TileLayer, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet.heat";
 import "leaflet/dist/leaflet.css";
+
+// 🛥️ Custom boat icon
+const boatIcon = new L.Icon({
+  iconUrl: "/boat.png", 
+  iconSize: [30, 30],
+  iconAnchor: [15, 15],
+});
 
 const HeatmapLayer = ({ data }) => {
   const map = useMap();
@@ -26,7 +33,8 @@ const HeatmapLayer = ({ data }) => {
 
 const HeatmapWindow = () => {
   const [heatData, setHeatData] = useState([]);
-  const [status, setStatus] = useState("loading"); // "loading", "ok", or "error"
+  const [boatMarkers, setBoatMarkers] = useState([]);
+  const [status, setStatus] = useState("loading");
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -35,9 +43,10 @@ const HeatmapWindow = () => {
         {
           data {
             boat_id
-            latitude
-            longitude
-            temperature
+            data_latitude
+            data_longitude
+            data_temperature
+            timestamp
           }
         }
       `;
@@ -48,11 +57,37 @@ const HeatmapWindow = () => {
           body: JSON.stringify({ query }),
         });
         const result = await response.json();
-        const points = result.data.data
-          .filter((b) => b.latitude && b.longitude && b.temperature)
-          .map((b) => [parseFloat(b.latitude), parseFloat(b.longitude), parseFloat(b.temperature)]);
-        
-        setHeatData(points);
+        const entries = result.data.data;
+
+        // 🌡️ For heatmap
+        const heat = entries
+          .filter((b) => b.data_latitude && b.data_longitude && b.data_temperature)
+          .map((b) => [
+            parseFloat(b.data_latitude),
+            parseFloat(b.data_longitude),
+            parseFloat(b.data_temperature),
+          ]);
+        setHeatData(heat);
+
+        // 🚤 For marker: get latest point per boat
+        const latestByBoat = {};
+        for (const entry of entries) {
+          const boatId = entry.boat_id;
+          if (!latestByBoat[boatId] || new Date(entry.timestamp) > new Date(latestByBoat[boatId].timestamp)) {
+            latestByBoat[boatId] = entry;
+          }
+        }
+
+        const markers = Object.values(latestByBoat)
+          .filter((b) => b.data_latitude && b.data_longitude)
+          .map((b) => ({
+            boat_id: b.boat_id,
+            lat: parseFloat(b.data_latitude),
+            lon: parseFloat(b.data_longitude),
+            temp: b.data_temperature,
+          }));
+
+        setBoatMarkers(markers);
         setStatus("ok");
       } catch (err) {
         console.error("Error fetching heatmap data:", err);
@@ -76,16 +111,22 @@ const HeatmapWindow = () => {
         )}
       </div>
 
-      <MapContainer
-        center={[37.87, -122.26]}
-        zoom={13}
-        style={{ height: "80vh", width: "100%" }}
-      >
+      <MapContainer center={[37.87, -122.26]} zoom={13} style={{ height: "80vh", width: "100%" }}>
         <TileLayer
           attribution="&copy; OpenStreetMap contributors"
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <HeatmapLayer data={heatData} />
+
+        {boatMarkers.map((b, idx) => (
+          <Marker key={idx} position={[b.lat, b.lon]} icon={boatIcon}>
+            <Popup>
+              <strong>{b.boat_id}</strong>
+              <br />
+              Temp: {b.temp}°C
+            </Popup>
+          </Marker>
+        ))}
       </MapContainer>
     </div>
   );
