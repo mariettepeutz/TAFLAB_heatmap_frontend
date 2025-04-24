@@ -42,7 +42,7 @@ const HeatmapWindow = () => {
         }
       `;
       try {
-        const response = await fetch("http://64.181.236.184:5000/graphql/boat_data", {
+        const response = await fetch("/graphql/boat_data", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ query }),
