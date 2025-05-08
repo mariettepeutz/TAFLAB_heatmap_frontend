@@ -1,70 +1,195 @@
-# Getting Started with Create React App
+# TAFLAB Heatmap Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A lightweight React + Leaflet application that visualises live **wave height, wind, and other sensor metrics** streamed from the TAFLab autonomous sailing boats.
 
-## Available Scripts
+![screenshot](docs/screenshot.png)
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## Table of Contents
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+1. [Features](#features)
+2. [Demo](#demo)
+3. [Architecture](#architecture)
+4. [Getting Started](#getting-started)
+5. [Configuration](#configuration)
+6. [Data Contract](#data-contract)
+7. [Branch Strategy](#branch-strategy)
+8. [Contributing](#contributing)
+9. [Roadmap](#roadmap)
+10. [License](#license)
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+---
 
-### `npm test`
+## Features
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+| 🌊 | Live heat‑map of wave heights (Leaflet.heat) |
+| -- | -------------------------------------------- |
+| ⛵  | Per‑boat markers with custom boat icon       |
+| 🕰 | Time‑slider to scrub historic telemetry      |
+| 🔌 | Pluggable data back‑end (REST, GraphQL, CSV) |
+| ⚙️ | Zero‑config local start; Docker‑ready build  |
 
-### `npm run build`
+---
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Demo
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+# 1 – clone & install
+$ git clone https://github.com/mariettepeutz/TAFLAB_heatmap_frontend.git
+$ cd TAFLAB_heatmap_frontend/taflab-heatmap-frontend
+$ npm install   # or pnpm / yarn
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+# 2 – start Vite dev server (http://localhost:5173)
+$ npm run dev
+```
 
-### `npm run eject`
+If you have a running **telemetry back‑end** (see below), the heat‑map will populate automatically. For quick local testing we now default to **`waves.csv`** (27 Apr 2025 test run) bundled in the repo, so you can explore the UI with zero external dependencies.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+---
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Architecture
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```text
+┌────────────┐          ┌──────────────┐
+│  Boats     │  MQTT   │  TAFLab API  │  REST/GraphQL
+└────────────┘  ───▶───┤  (Flask)     │
+                      └─────┬────────┘
+                            │ JSON / CSV
+                            ▼
+                     taﬂab‑heatmap‑frontend (React + Leaflet)
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+* **React + Vite** for hot‑reload development.
+* **Leaflet** to render the map; **leaflet.heat** for the heat layer.
+* **Papa Parse** to parse CSV fall‑back files in browser.
+* **Vite proxy** forwards `/api/**` to the remote or local Flask server.
 
-## Learn More
+---
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## Getting Started
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### Prerequisites
 
-### Code Splitting
+* Node >= 18
+* npm (comes with Node) — or **pnpm**/Yarn
+* Optionally Docker (see below)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Installation
 
-### Analyzing the Bundle Size
+```bash
+npm install
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### Running locally with your Flask API
 
-### Making a Progressive Web App
+1. Make sure your **Flask** back‑end is running (default `http://localhost:5000`).
+2. Copy `.env.example` → `.env.local` and set `VITE_API_URL=http://localhost:5000/api`.
+3. Start the dev server: `npm run dev` (Vite injects the `VITE_` vars at build time).
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+### Running against the bundled sample data
 
-### Advanced Configuration
+No env vars are needed; the app will fall back to `/waves.csv`.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+### Production build
 
-### Deployment
+```bash
+npm run build
+npm run preview   # serve dist folder locally
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+### Docker (optional)
 
-### `npm run build` fails to minify
+```bash
+docker build -t taflab/heatmap-frontend .
+# serve on port 8080
+docker run -it --rm -p 8080:80 taflab/heatmap-frontend
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+---
+
+## Configuration
+
+| Variable              | Default                     | Description                                                                                                                                                           |
+| --------------------- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VITE_API_URL`        | `http://localhost:5000/api` | Base URL of **your Flask** telemetry API. The `VITE_` prefix is *only* so Vite exposes the variable to the browser; it does **not** mean the API itself runs on Vite. |
+| `VITE_DEFAULT_CENTER` | `37.8754,-122.2534`         | Initial map centre (lat,lng).                                                                                                                                         |
+| `VITE_DEFAULT_ZOOM`   | `13`                        | Initial zoom level.                                                                                                                                                   |
+
+Create a `.env.local` file to override any of these at runtime.
+
+---
+
+## Data Contract
+
+The front‑end expects **JSON** records in the shape:
+
+```jsonc
+{
+  "boat_id": "string",
+  "timestamp": "2025-05-08T15:42:21Z", // ISO‑8601 UTC
+  "latitude": 37.875,
+  "longitude": -122.253,
+  "wave_height": 0.42
+}
+```
+
+*The CSV fallback uses the same column names.*
+
+---
+
+## Oracle GraphQL Back‑End
+
+In production we pull live rows from an **Oracle Autonomous Database** exposed through the [`TAFBackend`](https://github.com/Berkeley-TAFLab/TAFBackend/tree/graphql) GraphQL API. A simple cURL example that fetches the 100 most‑recent measurements:
+
+```bash
+curl -X POST https://<oracle‑host>/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query":"{ waves(limit: 100, order_by: {timestamp: desc}) { boat_id timestamp latitude longitude wave_height } }"}' \
+  | jq '.data.waves'
+```
+
+To switch the React app from the local CSV to the Oracle back‑end, set these in **`.env.local`**:
+
+```env
+VITE_API_URL=https://<oracle‑host>/graphql  # GraphQL endpoint
+VITE_API_MODE=graphql                       # front‑end picks correct fetcher
+```
+
+The `waves.csv` file remains as a lightweight fallback for offline demos.
+
+---
+
+## Branch Strategy
+
+* **`main`** – stable releases, auto‑deployed.
+* **`dev`** – default integration branch.
+* **feature/**\* – short‑lived branches merged via PR.
+
+CI (GitHub Actions) runs lint, test, and build on every PR. Deployments to OCI / Vercel happen from `main`.
+
+---
+
+## Contributing
+
+1. Fork the repo and create your feature branch (`git checkout -b feature/MyFeature`).
+2. Run `npm run lint` and `npm test` before committing.
+3. Submit a PR with a clear description of your changes.
+
+Issue templates and a full **Code of Conduct** live in `.github/`.
+
+---
+
+## Roadmap
+
+* [ ] Switch to **WebSockets** for sub‑second updates.
+* [ ] Add wind‑vector overlay.
+* [ ] Mobile‑first layout tweaks.
+* [ ] Storybook for UI components.
+* [ ] Dark mode.
+
+---
+
+## License
+
+MIT © 2025 TAFLab / Mariëtte Peutz
