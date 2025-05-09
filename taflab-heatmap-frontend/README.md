@@ -1,9 +1,5 @@
 # TAFLAB Heatmap Frontend
 
-A lightweight React + Leaflet application that visualises live **wave height, wind, and other sensor metrics** streamed from the TAFLab autonomous sailing boats.
-
-![screenshot](docs/screenshot.png)
-
 ---
 
 ## Table of Contents
@@ -44,7 +40,7 @@ $ npm install   # or pnpm / yarn
 $ npm run dev
 ```
 
-If you have a running **telemetry back‑end** (see below), the heat‑map will populate automatically. For quick local testing we now default to **`waves.csv`** (27 Apr 2025 test run) bundled in the repo, so you can explore the UI with zero external dependencies.
+If you have a running **telemetry back‑end** (see below), the heat‑map will populate automatically. For quick local testing we now default to \`\` (27 Apr 2025 test run) bundled in the repo, so you can explore the UI with zero external dependencies.
 
 ---
 
@@ -80,6 +76,28 @@ If you have a running **telemetry back‑end** (see below), the heat‑map will 
 ```bash
 npm install
 ```
+
+### Offline CSV generator (`data_proc.py`)
+
+`data_proc.py` fetches raw accelerometer rows from the Oracle GraphQL back‑end (or any REST endpoint), estimates wave height, and saves **public/waves.csv** so the React heat‑map runs offline.
+
+```bash
+# pull 24 Apr 2025 + today into waves.csv
+python data_proc.py --dates 2025-04-24 today \
+                   --api https://adb…oraclecloudapps.com/ords/taf/graphql \
+                   --out public/waves.csv
+```
+
+Steps performed inside the script:
+
+1. **GraphQL pull** per date range.
+2. **Cleaning**: casts lat/lon/accel to float, timestamps to UTC.
+3. **Wave‑height derivation**: integrates z‑axis accel in 5‑s windows (10 Hz default).
+4. **CSV merge**: appends and `drop_duplicates` on `(timestamp, lat, lon)`.
+
+Run it anytime you need fresh local data without booting the whole backend.
+
+---
 
 ### Running locally with your Flask API
 
@@ -149,7 +167,7 @@ curl -X POST https://<oracle‑host>/graphql \
   | jq '.data.waves'
 ```
 
-To switch the React app from the local CSV to the Oracle back‑end, set these in **`.env.local`**:
+To switch the React app from the local CSV to the Oracle back‑end, set these in \`\`:
 
 ```env
 VITE_API_URL=https://<oracle‑host>/graphql  # GraphQL endpoint
@@ -162,8 +180,8 @@ The `waves.csv` file remains as a lightweight fallback for offline demos.
 
 ## Branch Strategy
 
-* **`main`** – stable releases, auto‑deployed.
-* **`dev`** – default integration branch.
+* \`\` – stable releases, auto‑deployed.
+* \`\` – default integration branch.
 * **feature/**\* – short‑lived branches merged via PR.
 
 CI (GitHub Actions) runs lint, test, and build on every PR. Deployments to OCI / Vercel happen from `main`.
@@ -182,11 +200,7 @@ Issue templates and a full **Code of Conduct** live in `.github/`.
 
 ## Roadmap
 
-* [ ] Switch to **WebSockets** for sub‑second updates.
-* [ ] Add wind‑vector overlay.
-* [ ] Mobile‑first layout tweaks.
-* [ ] Storybook for UI components.
-* [ ] Dark mode.
+*
 
 ---
 
