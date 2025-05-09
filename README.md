@@ -1,10 +1,12 @@
 # TAFLAB Heatmap Frontend
 
-> **Heads‑up (oracle‑version branch)**   This branch is **work‑in‑progress**. It focuses on wiring the React front‑end to the Oracle Autonomous DB exposed by [`TAFBackend`](https://github.com/Berkeley-TAFLab/TAFBackend/tree/graphql). Expect partial functionality while we flesh out the GraphQL queries and pagination. Contributions welcome!
-
+> **Heads‑up (oracle‑version branch)**   This branch is **work‑in‑progress**. It builds a heatmap GUI on a separate remote oracle server, but we're changing that to be more compatible with our database on our Oracle server. The main work is in the local-dev branch!
+> 
 A lightweight React + Leaflet application that visualises live **wave height, wind, and other sensor metrics** streamed from the TAFLab autonomous sailing boats.
 
 ---
+
+This is the readme for the local-dev branch, excluding the data processing
 
 ## Table of Contents
 
