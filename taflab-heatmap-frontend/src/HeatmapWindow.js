@@ -140,10 +140,11 @@ const HeatmapWindow = () => {
       </div>
 
       <MapContainer
-        center={[37.8754, -122.2534]}   // Mudd Building
+        center={[37.8640, -122.3133]}   // Berkeley Marina
         zoom={13}
         style={{ height: "80vh", width: "100%" }}
       >
+
         <TileLayer
           attribution="&copy; OpenStreetMap contributors"
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
