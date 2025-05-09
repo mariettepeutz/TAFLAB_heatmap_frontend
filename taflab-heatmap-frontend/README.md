@@ -96,6 +96,7 @@ Steps performed inside the script:
 4. **CSV merge**: appends and `drop_duplicates` on `(timestamp, lat, lon)`.
 
 Run it anytime you need fresh local data without booting the whole backend.
+Next steps to look into are further cleaning by recognizing patterns in waves (e.g. waves caused by boats, coastal swell, superficial wind waves)
 
 ---
 
