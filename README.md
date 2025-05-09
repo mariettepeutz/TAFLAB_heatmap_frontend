@@ -1,9 +1,5 @@
 # TAFLAB Heatmap Frontend
 
-> **Heads‑up (oracle‑version branch)**   This branch is **work‑in‑progress**. It focuses on wiring the React front‑end to the Oracle Autonomous DB exposed by [`TAFBackend`](https://github.com/Berkeley-TAFLab/TAFBackend/tree/graphql). Expect partial functionality while we flesh out the GraphQL queries and pagination. Contributions welcome!
-
-A lightweight React + Leaflet application that visualises live **wave height, wind, and other sensor metrics** streamed from the TAFLab autonomous sailing boats.
-
 ---
 
 ## Table of Contents
@@ -80,6 +76,29 @@ If you have a running **telemetry back‑end** (see below), the heat‑map will 
 ```bash
 npm install
 ```
+
+### Offline CSV generator (`data_proc.py`)
+
+`data_proc.py` fetches raw accelerometer rows from the Oracle GraphQL back‑end (or any REST endpoint), estimates wave height, and saves **public/waves.csv** so the React heat‑map runs offline.
+
+```bash
+# pull 24 Apr 2025 + today into waves.csv
+python data_proc.py --dates 2025-04-24 today \
+                   --api https://adb…oraclecloudapps.com/ords/taf/graphql \
+                   --out public/waves.csv
+```
+
+Steps performed inside the script:
+
+1. **GraphQL pull** per date range.
+2. **Cleaning**: casts lat/lon/accel to float, timestamps to UTC.
+3. **Wave‑height derivation**: integrates z‑axis accel in 5‑s windows (10 Hz default).
+4. **CSV merge**: appends and `drop_duplicates` on `(timestamp, lat, lon)`.
+
+Run it anytime you need fresh local data without booting the whole backend.
+Next steps to look into are further cleaning by recognizing patterns in waves (e.g. waves caused by boats, coastal swell, superficial wind waves)
+
+---
 
 ### Running locally with your Flask API
 
@@ -177,6 +196,12 @@ CI (GitHub Actions) runs lint, test, and build on every PR. Deployments to OCI 
 3. Submit a PR with a clear description of your changes.
 
 Issue templates and a full **Code of Conduct** live in `.github/`.
+
+---
+
+## Roadmap
+
+*
 
 ---
 
