@@ -2,6 +2,8 @@
 
 ---
 
+## Everything is inside the taflab-heatmap-frontend nested folder!
+
 ## Table of Contents
 
 1. [Features](#features)
